@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 215 140" width="100%" height="100%">
+  <defs>
+    <!-- Globe Blue Gradient -->
+    <linearGradient id="globeGradEmblem" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0066E5" />
+      <stop offset="50%" stop-color="#0046AA" />
+      <stop offset="100%" stop-color="#002255" />
+    </linearGradient>
+
+    <!-- Silver Metallic Orbit Gradients -->
+    <linearGradient id="silverGradEmblem" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="35%" stop-color="#CBD5E1" />
+      <stop offset="70%" stop-color="#94A3B8" />
+      <stop offset="100%" stop-color="#475569" />
+    </linearGradient>
+    <linearGradient id="orbitShadowEmblem" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#475569" />
+      <stop offset="50%" stop-color="#1E293B" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+
+    <!-- L and J Gradients -->
+    <linearGradient id="blueLEmblem" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#004BB4" />
+      <stop offset="100%" stop-color="#001F5C" />
+    </linearGradient>
+
+    <!-- Clip Path for Globe Grid -->
+    <clipPath id="globeClipEmblem">
+      <circle cx="65" cy="70" r="48" />
+    </clipPath>
+
+    <!-- Subtle Drop Shadow -->
+    <filter id="logoShadowEmblem" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <g filter="url(#logoShadowEmblem)">
+    <!-- Globe -->
+    <circle cx="65" cy="70" r="48" fill="url(#globeGradEmblem)" />
+
+    <!-- Globe Grid Lines -->
+    <g clip-path="url(#globeClipEmblem)" stroke="#FFFFFF" fill="none">
+      <path d="M 17,70 Q 65,78 113,70" stroke-width="2.2" opacity="0.95" />
+      <path d="M 23,45 Q 65,55 107,45" stroke-width="1.8" opacity="0.85" />
+      <path d="M 23,95 Q 65,85 107,95" stroke-width="1.8" opacity="0.85" />
+      <path d="M 35,27 Q 65,34 95,27" stroke-width="1.5" opacity="0.75" />
+      <path d="M 35,113 Q 65,106 95,113" stroke-width="1.5" opacity="0.75" />
+      <path d="M 65,22 C 61,45 61,95 65,118" stroke-width="2.2" opacity="0.95" />
+      <path d="M 40,26 C 24,48 24,92 40,114" stroke-width="1.8" opacity="0.85" />
+      <path d="M 90,26 C 106,48 106,92 90,114" stroke-width="1.8" opacity="0.85" />
+      <circle cx="65" cy="70" r="46.5" stroke="#60A5FA" stroke-width="1.2" opacity="0.5" />
+    </g>
+
+    <!-- Silver Orbit Swoosh -->
+    <path d="M 12,106 C 25,128 85,130 120,68 C 105,98 48,118 12,106 Z" fill="url(#orbitShadowEmblem)" opacity="0.85" />
+    <path d="M 10,98 C 22,122 86,124 122,54 C 114,66 98,88 65,100 C 38,109 18,104 10,98 Z" fill="url(#silverGradEmblem)" />
+    <path d="M 14,101 C 36,113 88,114 118,58" stroke="#FFFFFF" stroke-width="1.2" fill="none" opacity="0.7" />
+
+    <!-- L Letter -->
+    <path d="M 144,34 L 160,34 L 160,38 L 154,38 L 154,92 L 176,92 L 176,86 L 181,86 L 181,97 L 144,97 L 144,93 L 150,93 L 150,38 L 144,38 Z" fill="url(#blueLEmblem)" />
+    
+    <!-- J Letter -->
+    <path d="M 184,34 L 204,34 L 204,38 L 196,38 L 196,88 C 196,102 182,110 166,108 C 158,107 152,103 150,99 L 155,95 C 157,98 162,101 168,101 C 180,101 188,96 188,86 L 188,38 L 184,38 Z" fill="url(#silverGradEmblem)" stroke="#E2E8F0" stroke-width="0.5" />
+  </g>
+</svg>

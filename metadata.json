@@ -1,0 +1,8 @@
+{
+  "name": " LJ Global Service - Packaging \u0026 Print Consulting_HTML",
+  "description": "Professional printing industry portal offering Offset, Digital, and Large-Format customization services, interactive instant print estimator, sample visualizer, and RFQ system.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
