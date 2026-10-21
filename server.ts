@@ -3,7 +3,7 @@ import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 
-const PORT = 3000;
+const port = Number(process.env.PORT) || 3000;
 
 async function startServer() {
   const app = express();
@@ -190,8 +190,8 @@ Return strictly a JSON object matching this schema:
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`LJ Packaging Consulting server running on http://localhost:${PORT}`);
+  app.listen(port, "0.0.0.0", () => {
+    console.log(`Server running on port ${port}`);
   });
 }
 
