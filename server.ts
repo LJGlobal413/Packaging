@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 
@@ -175,18 +176,36 @@ Return strictly a JSON object matching this schema:
     }
   });
 
-  // Vite middleware in development
-  if (process.env.NODE_ENV !== 'production') {
+  // Resilient static build serving with Vite fallback
+  const distPath = path.resolve(process.cwd(), 'dist');
+  const indexHtmlPath = path.join(distPath, 'index.html');
+
+  if (process.env.NODE_ENV === 'production' && fs.existsSync(indexHtmlPath)) {
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      res.sendFile(indexHtmlPath);
+    });
+  } else {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
     app.use(vite.middlewares);
-  } else {
-    const distPath = path.resolve(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+    app.use('*', async (req, res, next) => {
+      const url = req.originalUrl;
+      try {
+        const rootHtmlPath = path.resolve(process.cwd(), 'index.html');
+        if (fs.existsSync(rootHtmlPath)) {
+          let template = fs.readFileSync(rootHtmlPath, 'utf-8');
+          template = await vite.transformIndexHtml(url, template);
+          res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+        } else {
+          next();
+        }
+      } catch (e) {
+        vite.ssrFixStacktrace(e as Error);
+        next(e);
+      }
     });
   }
 
