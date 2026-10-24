@@ -5,18 +5,14 @@ import {
   Mail,
   CheckCircle2,
   Box,
-  Layers,
-  Package,
-  Truck,
   Paperclip,
   Trash2,
   UploadCloud,
   Copy,
   Check,
-  FileCheck,
   ShieldCheck,
   Loader2,
-  Sparkles,
+  MessageSquare,
 } from 'lucide-react';
 import { COMPANY_PROFILE } from '../data/printingData';
 
@@ -25,7 +21,7 @@ interface RfqModalProps {
   onClose: () => void;
   initialSpec?: {
     category?: string;
-    formType?: 'inquiry' | 'contract';
+    formType?: 'inquiry' | 'contact';
     quantity?: number;
     paperStock?: string;
     colorMode?: string;
@@ -47,8 +43,8 @@ export const RfqModal: React.FC<RfqModalProps> = ({
   onClose,
   initialSpec,
 }) => {
-  const [formType, setFormType] = useState<'inquiry' | 'contract'>(
-    initialSpec?.formType || (initialSpec?.category?.toLowerCase().includes('contract') ? 'contract' : 'inquiry')
+  const [formType, setFormType] = useState<'inquiry' | 'contact'>(
+    initialSpec?.formType || (initialSpec?.category?.toLowerCase().includes('contact') ? 'contact' : 'inquiry')
   );
   const [fullName, setFullName] = useState('');
   const [company, setCompany] = useState('');
@@ -66,11 +62,6 @@ export const RfqModal: React.FC<RfqModalProps> = ({
   );
   const [quantity, setQuantity] = useState(initialSpec?.quantity || 5000);
 
-  // Contract specific fields
-  const [contractType, setContractType] = useState('Master Supply Agreement (MSA) - Multi-Year Supply');
-  const [incoterms, setIncoterms] = useState('FOB Hong Kong / Shenzhen');
-  const [contractDuration, setContractDuration] = useState('12-Month Annual Rolling Contract');
-
   const [notes, setNotes] = useState(
     initialSpec
       ? `Consulting & Production Parameters:\n- Material Stock: ${initialSpec.paperStock || '350gsm C1S SBS'}\n- Print / Coating: ${initialSpec.colorMode || '4C Offset + Soft-Touch'}\n- Layout & Specs: ${(initialSpec.finishes || []).join(' | ')}\n- Estimated Budget: ${initialSpec.totalEstimate || 'Pending'}\n- Target Timeline: ${initialSpec.leadTime || '6-10 Days Print & Dispatch'}`
@@ -85,9 +76,9 @@ export const RfqModal: React.FC<RfqModalProps> = ({
   const [copiedBrief, setCopiedBrief] = useState(false);
   const [serverLeadId, setServerLeadId] = useState<string>('');
 
-  // Primary dual-alert email addresses
+  // Dual-alert notification addresses
   const primaryEngineeringEmail = COMPANY_PROFILE.email || 'ljservicedg@gmail.com';
-  const primaryContractEmail = COMPANY_PROFILE.contractEmail || 'Service@ljglobal.in';
+  const primaryServiceEmail = COMPANY_PROFILE.contractEmail || 'Service@ljglobal.in';
 
   useEffect(() => {
     if (initialSpec?.formType) {
@@ -132,17 +123,12 @@ export const RfqModal: React.FC<RfqModalProps> = ({
           attachedFiles.map((f, idx) => `  ${idx + 1}. ${f.name} (${f.size})`).join('\n')
         : '';
 
-    const contractBlock =
-      formType === 'contract'
-        ? `\nCommercial Contract Parameters:\n• Contract Framework: ${contractType}\n• Incoterms / Dispatch Terms: ${incoterms}\n• Contract Duration / Horizon: ${contractDuration}\n`
-        : '';
-
     return (
       `==================================================\n` +
-      `LJ PACKAGING CONSULTANTS - LEAD & CONTRACT INQUIRY\n` +
-      `Target Notification Emails: ${primaryEngineeringEmail} & ${primaryContractEmail}\n` +
+      `LJ PACKAGING CONSULTANTS - LEAD INQUIRY NOTIFICATION\n` +
+      `Alert Recipients: ${primaryEngineeringEmail} & ${primaryServiceEmail}\n` +
       `==================================================\n\n` +
-      `SUBMISSION TYPE: ${formType === 'contract' ? 'COMMERCIAL CONTRACT & SUPPLY AGREEMENT' : 'TECHNICAL PACKAGING INQUIRY'}\n\n` +
+      `SUBMISSION TYPE: ${formType === 'contact' ? 'DIRECT CONTACT US MESSAGE' : 'TECHNICAL PACKAGING INQUIRY'}\n\n` +
       `CLIENT CONTACT DETAILS:\n` +
       `• Contact Name: ${fullName}\n` +
       `• Company / Brand: ${company}\n` +
@@ -152,18 +138,16 @@ export const RfqModal: React.FC<RfqModalProps> = ({
       `• Practice Scope: ${scopeLabel}\n` +
       `• Product / Spec Title: ${projectTitle}\n` +
       `• Planned Production Volume: ${quantity.toLocaleString()} units\n` +
-      contractBlock +
       `\nPROJECT BRIEF & TECHNICAL NOTES:\n${notes || 'No additional notes provided.'}` +
       filesText
     );
   };
 
   const generateMailtoUrl = () => {
-    const scopeLabel = getScopeLabel();
-    const isContract = formType === 'contract';
+    const subjectPrefix = formType === 'contact' ? 'CONTACT US MESSAGE' : 'PACKAGING INQUIRY';
 
     const subject = encodeURIComponent(
-      `[${isContract ? 'CONTRACT & SUPPLY AGREEMENT' : 'PACKAGING INQUIRY'}] ${projectTitle} - ${quantity.toLocaleString()} units (${company || fullName})`
+      `[${subjectPrefix}] ${projectTitle} - ${quantity.toLocaleString()} units (${company || fullName})`
     );
 
     const fullBrief = buildBriefText();
@@ -172,14 +156,13 @@ export const RfqModal: React.FC<RfqModalProps> = ({
         `--------------------------------------------------\n` +
         `Note: This lead alert has also been automatically registered on the LJ Packaging server for priority dispatch to:\n` +
         `• Engineering & Technical Team: ${primaryEngineeringEmail}\n` +
-        `• Commercial & Contract Desk:   ${primaryContractEmail}\n` +
+        `• Client Services Desk:         ${primaryServiceEmail}\n` +
         `--------------------------------------------------\n\n` +
-        `Please send your response, CAD dieline proposals, and contract agreement documentation.\n\n` +
+        `Please send your response and technical feedback.\n\n` +
         `Thank you,\n${fullName}`
     );
 
-    // Both emails are in the 'to' field: ljservicedg@gmail.com,Service@ljglobal.in
-    return `mailto:${primaryEngineeringEmail},${primaryContractEmail}?subject=${subject}&body=${emailBody}`;
+    return `mailto:${primaryEngineeringEmail},${primaryServiceEmail}?subject=${subject}&body=${emailBody}`;
   };
 
   const handleSendRequest = async (e: React.FormEvent) => {
@@ -187,7 +170,6 @@ export const RfqModal: React.FC<RfqModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      // Dispatch lead generation alert to backend server
       const response = await fetch('/api/inquiry', {
         method: 'POST',
         headers: {
@@ -202,8 +184,6 @@ export const RfqModal: React.FC<RfqModalProps> = ({
           scope: getScopeLabel(),
           projectTitle,
           quantity,
-          contractType: formType === 'contract' ? contractType : undefined,
-          incoterms: formType === 'contract' ? incoterms : undefined,
           notes,
           attachedFiles,
         }),
@@ -239,8 +219,8 @@ export const RfqModal: React.FC<RfqModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base sm:text-lg font-bold text-white uppercase tracking-tight">
-                  {formType === 'contract'
-                    ? 'Commercial Contract & Supply Agreement'
+                  {formType === 'contact'
+                    ? 'Contact Us & Direct Consultation'
                     : 'Packaging Inquiry & Technical Consultation'}
                 </h3>
                 <span className="px-2 py-0.5 text-[9px] font-mono font-bold uppercase rounded bg-blue-500/20 text-[#00AEEF] border border-blue-500/30 hidden sm:inline-block">
@@ -248,7 +228,7 @@ export const RfqModal: React.FC<RfqModalProps> = ({
                 </span>
               </div>
               <p className="text-[11px] text-zinc-400 font-mono mt-0.5">
-                Notifications routed to: <span className="text-[#00AEEF] font-semibold">{primaryEngineeringEmail}</span> & <span className="text-emerald-400 font-semibold">{primaryContractEmail}</span>
+                Notifications routed to: <span className="text-[#00AEEF] font-semibold">{primaryEngineeringEmail}</span> & <span className="text-emerald-400 font-semibold">{primaryServiceEmail}</span>
               </p>
             </div>
           </div>
@@ -261,7 +241,7 @@ export const RfqModal: React.FC<RfqModalProps> = ({
           </button>
         </div>
 
-        {/* Tab Toggle: Inquiry vs Contract */}
+        {/* Tab Toggle: Inquiry vs Contact Us */}
         <div className="bg-zinc-100 border-b border-zinc-200 px-6 pt-3 flex gap-4 text-xs font-bold uppercase tracking-wider">
           <button
             type="button"
@@ -273,19 +253,19 @@ export const RfqModal: React.FC<RfqModalProps> = ({
             }`}
           >
             <Box className="w-4 h-4" />
-            <span>1. Technical Packaging Inquiry</span>
+            <span>1. Packaging Inquiry</span>
           </button>
           <button
             type="button"
-            onClick={() => setFormType('contract')}
+            onClick={() => setFormType('contact')}
             className={`pb-2.5 px-1 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
-              formType === 'contract'
-                ? 'border-emerald-600 text-emerald-600'
+              formType === 'contact'
+                ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-zinc-500 hover:text-zinc-900'
             }`}
           >
-            <FileCheck className="w-4 h-4" />
-            <span>2. Contract & Supply Agreement</span>
+            <MessageSquare className="w-4 h-4" />
+            <span>2. Contact Us Form</span>
           </button>
         </div>
 
@@ -298,7 +278,7 @@ export const RfqModal: React.FC<RfqModalProps> = ({
               </div>
               <div>
                 <h4 className="text-2xl font-bold text-zinc-950">
-                  Lead Generation & Contract Alert Dispatched!
+                  Lead Alert Dispatched!
                 </h4>
                 {serverLeadId && (
                   <p className="text-xs font-mono text-zinc-500 mt-1">
@@ -311,26 +291,26 @@ export const RfqModal: React.FC<RfqModalProps> = ({
               <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 text-left max-w-lg mx-auto space-y-3 shadow-xs">
                 <div className="flex items-center gap-2 text-xs font-bold font-mono uppercase text-zinc-700">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  <span>Email Notification Alerts Queued To Both Inboxes:</span>
+                  <span>Email Notification Alerts Dispatched To Both Inboxes:</span>
                 </div>
                 <div className="space-y-2 text-xs">
                   <div className="flex items-center justify-between p-2 rounded bg-white border border-zinc-200">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-[#0066E5]"></span>
-                      <span className="font-semibold text-zinc-900">Engineering & Manufacturing Lead:</span>
+                      <span className="font-semibold text-zinc-900">Engineering & Production Lead:</span>
                     </div>
                     <span className="font-mono text-[#0066E5] font-bold">{primaryEngineeringEmail}</span>
                   </div>
                   <div className="flex items-center justify-between p-2 rounded bg-white border border-zinc-200">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                      <span className="font-semibold text-zinc-900">Commercial Contract Desk:</span>
+                      <span className="font-semibold text-zinc-900">Client Services Desk:</span>
                     </div>
-                    <span className="font-mono text-emerald-600 font-bold">{primaryContractEmail}</span>
+                    <span className="font-mono text-emerald-600 font-bold">{primaryServiceEmail}</span>
                   </div>
                 </div>
                 <p className="text-[11px] text-zinc-500 leading-relaxed pt-1">
-                  Our engineering director and contract leads have been notified. Click below to open your preferred mail client with all formatted specifications pre-filled.
+                  Our engineering and client services leads have received your notification alert. You can also open your mail client to send a direct pre-filled copy.
                 </p>
               </div>
 
@@ -341,7 +321,7 @@ export const RfqModal: React.FC<RfqModalProps> = ({
                   className="w-full sm:w-auto px-6 py-3 bg-[#0066E5] hover:bg-[#0052B8] text-white font-bold text-xs uppercase tracking-wider rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-sm"
                 >
                   <Mail className="w-4 h-4" />
-                  <span>Open in Mail Client (Prefilled to Both)</span>
+                  <span>Open in Mail Client (Both Pre-filled)</span>
                 </a>
 
                 <button
@@ -349,7 +329,7 @@ export const RfqModal: React.FC<RfqModalProps> = ({
                   className="w-full sm:w-auto px-5 py-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-semibold text-xs uppercase tracking-wider rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2"
                 >
                   {copiedBrief ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-                  <span>{copiedBrief ? 'Copied Contract Brief!' : 'Copy Full Brief'}</span>
+                  <span>{copiedBrief ? 'Copied Brief!' : 'Copy Full Brief'}</span>
                 </button>
 
                 <button
@@ -372,7 +352,7 @@ export const RfqModal: React.FC<RfqModalProps> = ({
                     Select Packaging Discipline / Scope:
                   </label>
                   <span className="text-[10px] text-zinc-400 font-mono">
-                    Routing to {primaryEngineeringEmail} & {primaryContractEmail}
+                    Routing to {primaryEngineeringEmail} & {primaryServiceEmail}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -429,66 +409,6 @@ export const RfqModal: React.FC<RfqModalProps> = ({
                   </button>
                 </div>
               </div>
-
-              {/* Commercial Contract Parameters (Visible in Contract Mode) */}
-              {formType === 'contract' && (
-                <div className="bg-emerald-50/60 border border-emerald-200/80 rounded-lg p-3.5 space-y-3">
-                  <div className="flex items-center gap-1.5 text-emerald-800 font-bold text-[11px] uppercase tracking-wider font-mono">
-                    <FileCheck className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Commercial Contract & Supply Agreement Framework:</span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                    <div>
-                      <label className="block text-[10px] font-mono uppercase text-emerald-900 font-bold mb-1">
-                        Contract Type
-                      </label>
-                      <select
-                        value={contractType}
-                        onChange={(e) => setContractType(e.target.value)}
-                        className="w-full bg-white border border-emerald-300 rounded p-2 text-zinc-900 focus:outline-none focus:border-emerald-600 text-xs"
-                      >
-                        <option>Master Supply Agreement (MSA)</option>
-                        <option>Annual Volume Call-Off Agreement</option>
-                        <option>Proprietary CAD Die & Tooling Contract</option>
-                        <option>NDA & Confidential Packaging Development</option>
-                        <option>Trial Batch / Pilot Run Agreement</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-mono uppercase text-emerald-900 font-bold mb-1">
-                        Delivery Incoterms
-                      </label>
-                      <select
-                        value={incoterms}
-                        onChange={(e) => setIncoterms(e.target.value)}
-                        className="w-full bg-white border border-emerald-300 rounded p-2 text-zinc-900 focus:outline-none focus:border-emerald-600 text-xs"
-                      >
-                        <option>FOB Hong Kong / Shenzhen</option>
-                        <option>CIF Global Destination Port</option>
-                        <option>DDP Warehouse (Duty Paid)</option>
-                        <option>Ex-Works (Dongguan Factory)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-mono uppercase text-emerald-900 font-bold mb-1">
-                        Contract Duration
-                      </label>
-                      <select
-                        value={contractDuration}
-                        onChange={(e) => setContractDuration(e.target.value)}
-                        className="w-full bg-white border border-emerald-300 rounded p-2 text-zinc-900 focus:outline-none focus:border-emerald-600 text-xs"
-                      >
-                        <option>12-Month Annual Rolling Contract</option>
-                        <option>Multi-Year Long-Term Agreement</option>
-                        <option>6-Month Fixed Call-Off Window</option>
-                        <option>Single Production Run Contract</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Contact Fields */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -584,7 +504,7 @@ export const RfqModal: React.FC<RfqModalProps> = ({
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="block text-[11px] font-mono uppercase text-zinc-600 font-bold">
-                      Technical Parameters, Barrier Goals & Contract Terms:
+                      Technical Parameters, Barrier Goals & Specifications:
                     </label>
                     <button
                       type="button"
@@ -599,7 +519,7 @@ export const RfqModal: React.FC<RfqModalProps> = ({
                     rows={3}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Specify dimensions (L×W×D), barrier requirements (OTR/WVTR), substrate choices, target incoterms, annual schedule, or NDA requirements..."
+                    placeholder="Specify dimensions (L×W×D), barrier requirements (OTR/WVTR), substrate choices, target timelines, or shipping destination..."
                     className="w-full border border-zinc-300 rounded p-2.5 text-zinc-900 focus:outline-none focus:border-[#0066E5] resize-none"
                   />
                 </div>
@@ -641,10 +561,10 @@ export const RfqModal: React.FC<RfqModalProps> = ({
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-zinc-800">
-                        <span className="text-[#0066E5] underline decoration-[#0066E5]/40 underline-offset-2">Click to upload</span> or drag & drop CAD files or contracts
+                        <span className="text-[#0066E5] underline decoration-[#0066E5]/40 underline-offset-2">Click to upload</span> or drag & drop CAD or artwork files
                       </p>
                       <p className="text-[10px] text-zinc-500 font-mono mt-0.5">
-                        CAD Dielines (.ARD, .DXF, .AI), Artwork (.PDF, .EPS), or MSA Drafts (Up to 50MB)
+                        CAD Dielines (.ARD, .DXF, .AI), Artwork (.PDF, .EPS), or Spec Sheets (Up to 50MB)
                       </p>
                     </div>
                   </div>
@@ -695,7 +615,7 @@ export const RfqModal: React.FC<RfqModalProps> = ({
               <div className="pt-3 border-t border-zinc-100 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="text-[11px] font-mono text-zinc-500 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span>Alerts: {primaryEngineeringEmail} & {primaryContractEmail}</span>
+                  <span>Alerts: {primaryEngineeringEmail} & {primaryServiceEmail}</span>
                 </div>
 
                 <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
@@ -719,7 +639,7 @@ export const RfqModal: React.FC<RfqModalProps> = ({
                     ) : (
                       <>
                         <Send className="w-3.5 h-3.5" />
-                        <span>{formType === 'contract' ? 'Submit Contract Request' : 'Submit Inquiry & Alert Both'}</span>
+                        <span>Submit Inquiry & Alert Both</span>
                       </>
                     )}
                   </button>

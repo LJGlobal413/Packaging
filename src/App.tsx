@@ -16,6 +16,7 @@ import { CleaningBottleDevelopment } from './components/CleaningBottleDevelopmen
 import { PrintMisSolutions } from './components/PrintMisSolutions';
 import { ProcessAndLogistics } from './components/ProcessAndLogistics';
 import { AboutAndLinkedIn } from './components/AboutAndLinkedIn';
+import { ContactSection } from './components/ContactSection';
 import { RfqModal } from './components/RfqModal';
 import { ExportCodeModal } from './components/ExportCodeModal';
 import { StructuralCategory, AIPackagingRecommendation } from './types';
@@ -38,21 +39,16 @@ export default function App() {
     }
   };
 
-  const handleOpenRfqModal = (serviceName?: string, formType?: 'inquiry' | 'contract') => {
-    const isContract =
-      formType === 'contract' ||
-      (typeof serviceName === 'string' &&
-        (serviceName.toLowerCase().includes('contract') || serviceName.toLowerCase().includes('agreement')));
-
+  const handleOpenRfqModal = (serviceName?: string, formType?: 'inquiry' | 'contact') => {
     if (serviceName && typeof serviceName === 'string') {
       setRfqInitialSpec({
         category: serviceName,
-        formType: isContract ? 'contract' : 'inquiry',
-        quantity: isContract ? 10000 : 3000,
+        formType: formType || 'inquiry',
+        quantity: 3000,
         paperStock: '350gsm C1S Virgin SBS Board + Barrier Film',
         colorMode: '4C Offset + Soft-Touch Matte Coating',
         finishes: ['Step-and-Repeat Die Layout', 'Cape Systems Palletization'],
-        totalEstimate: isContract ? 'Volume Master Supply Quotation' : 'Custom Consulting & Production Quote',
+        totalEstimate: 'Custom Consulting & Production Quote',
         unitPrice: 'TBD',
         leadTime: '24-48h CNC Sample / 6-10d Print & Dispatch',
       });
@@ -191,6 +187,9 @@ export default function App() {
 
         {/* About LJ Packaging Consultants, Lab Credentials & FAQs */}
         <AboutAndLinkedIn onOpenRfqModal={() => handleOpenRfqModal('General Packaging Consulting Inquiry')} />
+
+        {/* Contact Us Form & Direct Dual Email Alerts */}
+        <ContactSection />
       </main>
 
       {/* Consulting Firm Footer */}
@@ -230,17 +229,14 @@ export default function App() {
                 <span>{COMPANY_PROFILE.email}</span>
               </a>
               <span className="text-zinc-700 hidden sm:inline" aria-hidden="true">|</span>
-              <button
-                type="button"
-                onClick={() => handleOpenRfqModal('Commercial Packaging Supply Agreement', 'contract')}
-                className="text-zinc-300 hover:text-white transition-colors flex items-center gap-1.5 font-medium cursor-pointer"
-                title="Submit Commercial Contract, MSA, or Volume Supply Agreement"
+              <a
+                href={`mailto:${COMPANY_PROFILE.contractEmail}`}
+                className="text-zinc-300 hover:text-white transition-colors flex items-center gap-1.5"
+                title="Global Client Service Desk"
               >
-                <span className="px-1.5 py-0.2 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  Contract
-                </span>
+                <Mail className="w-3.5 h-3.5 text-emerald-500" />
                 <span>{COMPANY_PROFILE.contractEmail}</span>
-              </button>
+              </a>
             </div>
           </div>
 

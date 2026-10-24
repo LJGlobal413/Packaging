@@ -16,7 +16,7 @@ import {
 import { COMPANY_PROFILE } from '../data/printingData';
 
 interface AboutAndLinkedInProps {
-  onOpenRfqModal: (serviceName?: string, formType?: 'inquiry' | 'contract') => void;
+  onOpenRfqModal: (serviceName?: string) => void;
 }
 
 const CONSULTING_FAQS = [
@@ -130,15 +130,14 @@ export const AboutAndLinkedIn: React.FC<AboutAndLinkedInProps> = ({
                 <span>Engineering: {COMPANY_PROFILE.email}</span>
               </a>
 
-              <button
-                type="button"
-                onClick={() => onOpenRfqModal('Commercial Packaging Supply Agreement', 'contract')}
-                className="flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-950 font-semibold px-4 py-3 rounded text-xs uppercase tracking-wider transition-colors cursor-pointer font-mono border border-emerald-200/60"
-                title="Fill Commercial Contract & Supply Agreement Form"
+              <a
+                href={`mailto:${COMPANY_PROFILE.contractEmail}`}
+                className="flex items-center gap-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-semibold px-4 py-3 rounded text-xs uppercase tracking-wider transition-colors cursor-pointer font-mono"
+                title="Email Client Services"
               >
                 <Mail className="w-4 h-4 text-emerald-600" />
-                <span>Contract: {COMPANY_PROFILE.contractEmail}</span>
-              </button>
+                <span>Service: {COMPANY_PROFILE.contractEmail}</span>
+              </a>
             </div>
           </div>
 
@@ -163,7 +162,7 @@ export const AboutAndLinkedIn: React.FC<AboutAndLinkedInProps> = ({
                     </span>
                     <span className="flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                      Contract: <a href={`mailto:${COMPANY_PROFILE.contractEmail}`} className="text-zinc-900 hover:text-emerald-600 font-semibold">{COMPANY_PROFILE.contractEmail}</a>
+                      Client Service: <a href={`mailto:${COMPANY_PROFILE.contractEmail}`} className="text-zinc-900 hover:text-emerald-600 font-semibold">{COMPANY_PROFILE.contractEmail}</a>
                     </span>
                   </div>
                 </div>

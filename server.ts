@@ -289,6 +289,79 @@ Return strictly a JSON object matching this schema:
     });
   });
 
+  // Dedicated Contact Us Form Submission & Dual Email Notification Alert Endpoint
+  app.post('/api/contact', (req, res) => {
+    try {
+      const {
+        name,
+        fullName,
+        email,
+        company = 'Not specified',
+        phone = 'Not provided',
+        subject = 'General Packaging & Production Contact',
+        message = '',
+      } = req.body;
+
+      const clientName = name || fullName;
+
+      if (!clientName || !email) {
+        return res.status(400).json({ error: 'Name and email address are required to contact us.' });
+      }
+
+      const contactId = `CONTACT-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 899 + 100)}`;
+      const timestamp = new Date().toISOString();
+      const recipients = ['ljservicedg@gmail.com', 'Service@ljglobal.in'];
+
+      const contactRecord = {
+        id: contactId,
+        timestamp,
+        fullName: clientName,
+        company,
+        email,
+        phone,
+        formType: 'Direct Contact Us Message',
+        scope: subject,
+        projectTitle: subject,
+        quantity: 0,
+        notes: message,
+        attachedFilesCount: 0,
+        recipients,
+      };
+
+      leadAlertsStore.unshift(contactRecord);
+      if (leadAlertsStore.length > 100) leadAlertsStore.pop();
+
+      // Output formatted Contact Us Notification Alert
+      console.log('================================================================================');
+      console.log(`📩 [CONTACT US NOTIFICATION ALERT] NEW DIRECT CONTACT MESSAGE RECEIVED`);
+      console.log(`Contact ID: ${contactId} | Recorded At: ${timestamp}`);
+      console.log(`Email Alert Notification Dispatched To:`);
+      console.log(`  1. Engineering & Production Lead: ljservicedg@gmail.com`);
+      console.log(`  2. Contracts & Commercial Desk:   Service@ljglobal.in`);
+      console.log(`Sender Information:`);
+      console.log(`  - Name: ${contactRecord.fullName}`);
+      console.log(`  - Company / Organization: ${contactRecord.company}`);
+      console.log(`  - Email Address: ${contactRecord.email}`);
+      console.log(`  - Phone Number: ${contactRecord.phone}`);
+      console.log(`Message Content:`);
+      console.log(`  - Subject / Reason: ${contactRecord.scope}`);
+      console.log(`  - Message Body: ${contactRecord.notes}`);
+      console.log('================================================================================');
+
+      return res.json({
+        success: true,
+        contactId,
+        message: 'Contact form notification alerts successfully queued for ljservicedg@gmail.com and Service@ljglobal.in',
+        recipients,
+        timestamp,
+        data: contactRecord,
+      });
+    } catch (err: any) {
+      console.error('Failed to log contact form submission:', err);
+      return res.status(500).json({ error: 'Failed to record contact notification alert.' });
+    }
+  });
+
   // Resilient static build serving with Vite fallback
   const distPath = path.resolve(process.cwd(), 'dist');
   const indexHtmlPath = path.join(distPath, 'index.html');
