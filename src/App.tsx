@@ -38,20 +38,26 @@ export default function App() {
     }
   };
 
-  const handleOpenRfqModal = (serviceName?: string) => {
+  const handleOpenRfqModal = (serviceName?: string, formType?: 'inquiry' | 'contract') => {
+    const isContract =
+      formType === 'contract' ||
+      (typeof serviceName === 'string' &&
+        (serviceName.toLowerCase().includes('contract') || serviceName.toLowerCase().includes('agreement')));
+
     if (serviceName && typeof serviceName === 'string') {
       setRfqInitialSpec({
         category: serviceName,
-        quantity: 3000,
+        formType: isContract ? 'contract' : 'inquiry',
+        quantity: isContract ? 10000 : 3000,
         paperStock: '350gsm C1S Virgin SBS Board + Barrier Film',
         colorMode: '4C Offset + Soft-Touch Matte Coating',
         finishes: ['Step-and-Repeat Die Layout', 'Cape Systems Palletization'],
-        totalEstimate: 'Custom Consulting & Production Quote',
+        totalEstimate: isContract ? 'Volume Master Supply Quotation' : 'Custom Consulting & Production Quote',
         unitPrice: 'TBD',
         leadTime: '24-48h CNC Sample / 6-10d Print & Dispatch',
       });
     } else {
-      setRfqInitialSpec(null);
+      setRfqInitialSpec(formType ? { formType } : null);
     }
     setIsRfqModalOpen(true);
   };
@@ -204,7 +210,7 @@ export default function App() {
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-5 text-xs">
+            <div className="flex flex-wrap items-center gap-4 text-xs">
               <a
                 href={COMPANY_PROFILE.linkedinUrl}
                 target="_blank"
@@ -218,10 +224,23 @@ export default function App() {
               <a
                 href={`mailto:${COMPANY_PROFILE.email}`}
                 className="text-zinc-300 hover:text-white transition-colors flex items-center gap-1.5"
+                title="Engineering & Technical Inquiries"
               >
                 <Mail className="w-3.5 h-3.5 text-[#0066E5]" />
                 <span>{COMPANY_PROFILE.email}</span>
               </a>
+              <span className="text-zinc-700 hidden sm:inline" aria-hidden="true">|</span>
+              <button
+                type="button"
+                onClick={() => handleOpenRfqModal('Commercial Packaging Supply Agreement', 'contract')}
+                className="text-zinc-300 hover:text-white transition-colors flex items-center gap-1.5 font-medium cursor-pointer"
+                title="Submit Commercial Contract, MSA, or Volume Supply Agreement"
+              >
+                <span className="px-1.5 py-0.2 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  Contract
+                </span>
+                <span>{COMPANY_PROFILE.contractEmail}</span>
+              </button>
             </div>
           </div>
 

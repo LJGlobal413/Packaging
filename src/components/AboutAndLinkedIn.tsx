@@ -16,7 +16,7 @@ import {
 import { COMPANY_PROFILE } from '../data/printingData';
 
 interface AboutAndLinkedInProps {
-  onOpenRfqModal: () => void;
+  onOpenRfqModal: (serviceName?: string, formType?: 'inquiry' | 'contract') => void;
 }
 
 const CONSULTING_FAQS = [
@@ -124,11 +124,21 @@ export const AboutAndLinkedIn: React.FC<AboutAndLinkedInProps> = ({
 
               <a
                 href={`mailto:${COMPANY_PROFILE.email}`}
-                className="flex items-center gap-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-semibold px-5 py-3 rounded text-xs uppercase tracking-wider transition-colors cursor-pointer font-mono"
+                className="flex items-center gap-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-semibold px-4 py-3 rounded text-xs uppercase tracking-wider transition-colors cursor-pointer font-mono"
               >
                 <Mail className="w-4 h-4 text-[#0066E5]" />
-                <span>Email Engineering: {COMPANY_PROFILE.email}</span>
+                <span>Engineering: {COMPANY_PROFILE.email}</span>
               </a>
+
+              <button
+                type="button"
+                onClick={() => onOpenRfqModal('Commercial Packaging Supply Agreement', 'contract')}
+                className="flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-950 font-semibold px-4 py-3 rounded text-xs uppercase tracking-wider transition-colors cursor-pointer font-mono border border-emerald-200/60"
+                title="Fill Commercial Contract & Supply Agreement Form"
+              >
+                <Mail className="w-4 h-4 text-emerald-600" />
+                <span>Contract: {COMPANY_PROFILE.contractEmail}</span>
+              </button>
             </div>
           </div>
 
@@ -146,6 +156,16 @@ export const AboutAndLinkedIn: React.FC<AboutAndLinkedInProps> = ({
                   <p className="text-xs font-mono uppercase tracking-wider text-[#0066E5]">
                     {COMPANY_PROFILE.division}
                   </p>
+                  <div className="flex flex-col gap-1 mt-2 text-[11px] font-mono text-zinc-600">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#0066E5]"></span>
+                      Engineering: <a href={`mailto:${COMPANY_PROFILE.email}`} className="text-zinc-900 hover:text-[#0066E5] font-semibold">{COMPANY_PROFILE.email}</a>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                      Contract: <a href={`mailto:${COMPANY_PROFILE.contractEmail}`} className="text-zinc-900 hover:text-emerald-600 font-semibold">{COMPANY_PROFILE.contractEmail}</a>
+                    </span>
+                  </div>
                 </div>
               </div>
 

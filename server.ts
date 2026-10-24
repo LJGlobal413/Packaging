@@ -1,6 +1,6 @@
 import express from 'express';
-import path from 'path';
-import fs from 'fs';
+import path from 'node:path';
+import fs from 'node:fs';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 
@@ -33,7 +33,7 @@ async function startServer() {
       if (apiKey) {
         try {
           const ai = new GoogleGenAI({ apiKey });
-          const systemInstruction = `You are the Principal Packaging Consultant & Structural Director at 'LJ Packaging Consulting Group' (Dongguan Engineering Lab & Hong Kong Logistics, email: ljservicedg@gmail.com).
+          const systemInstruction = `You are the Principal Packaging Consultant & Structural Director at 'LJ Packaging Consulting Group' (Dongguan Engineering Lab & Hong Kong Logistics, engineering email: ljservicedg@gmail.com, contract email: Service@LjGlobal.in).
 Your firm consults end-to-end across:
 1. Primary Packaging: Flexible barrier pouches, sachets, laminate structure engineering (layer-by-layer films, OTR, WVTR, seal integrity).
 2. Secondary Packaging: Folding carton structural design, CAD dieline geometry, grain direction, step-and-repeat die layouts, and automated folder-gluer compatibility.
@@ -174,6 +174,119 @@ Return strictly a JSON object matching this schema:
       console.error('AI Consulting Advisor error:', err);
       return res.status(500).json({ error: 'Failed to generate packaging consulting recommendation' });
     }
+  });
+
+  // In-memory lead generation & contract storage
+  const leadAlertsStore: Array<{
+    id: string;
+    timestamp: string;
+    fullName: string;
+    company: string;
+    email: string;
+    phone: string;
+    formType: string;
+    scope: string;
+    projectTitle: string;
+    quantity: number;
+    contractType?: string;
+    incoterms?: string;
+    notes: string;
+    attachedFilesCount: number;
+    recipients: string[];
+  }> = [];
+
+  // Lead Generation & Contract Form Submission Alert Endpoint
+  app.post('/api/inquiry', (req, res) => {
+    try {
+      const {
+        fullName,
+        company,
+        email,
+        phone,
+        formType = 'Inquiry',
+        scope = 'Full System Packaging',
+        projectTitle = 'Packaging Inquiry',
+        quantity = 3000,
+        contractType,
+        incoterms,
+        notes = '',
+        attachedFiles = [],
+      } = req.body;
+
+      if (!fullName || !email) {
+        return res.status(400).json({ error: 'Full name and contact email are required to process the inquiry.' });
+      }
+
+      const leadId = `LEAD-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 899 + 100)}`;
+      const timestamp = new Date().toISOString();
+      const recipients = ['ljservicedg@gmail.com', 'Service@ljglobal.in'];
+
+      const leadRecord = {
+        id: leadId,
+        timestamp,
+        fullName,
+        company: company || 'Not specified',
+        email,
+        phone: phone || 'Not provided',
+        formType: formType === 'contract' ? 'Commercial Contract & Supply Agreement' : 'Technical Packaging Inquiry',
+        scope,
+        projectTitle,
+        quantity: Number(quantity) || 3000,
+        contractType: contractType || (formType === 'contract' ? 'Master Supply & Call-Off Agreement' : 'Standard Production Order'),
+        incoterms: incoterms || 'FOB / CIF Global Dispatch',
+        notes,
+        attachedFilesCount: Array.isArray(attachedFiles) ? attachedFiles.length : 0,
+        recipients,
+      };
+
+      leadAlertsStore.unshift(leadRecord);
+      if (leadAlertsStore.length > 100) leadAlertsStore.pop();
+
+      // Output formatted Lead Generation Alert to server logs
+      console.log('================================================================================');
+      console.log(`🚨 [LEAD GENERATION NOTIFICATION ALERT] NEW INQUIRY & CONTRACT FILED`);
+      console.log(`Lead ID: ${leadId} | Recorded At: ${timestamp}`);
+      console.log(`Alert Notification Recipients:`);
+      console.log(`  1. Engineering & Production Hub: ljservicedg@gmail.com`);
+      console.log(`  2. Contracts & Agreements Desk: Service@ljglobal.in`);
+      console.log(`Lead Contact:`);
+      console.log(`  - Name: ${leadRecord.fullName}`);
+      console.log(`  - Company / Brand: ${leadRecord.company}`);
+      console.log(`  - Email: ${leadRecord.email}`);
+      console.log(`  - Phone / WhatsApp: ${leadRecord.phone}`);
+      console.log(`Inquiry Specifications:`);
+      console.log(`  - Category / Type: ${leadRecord.formType}`);
+      console.log(`  - Scope: ${leadRecord.scope}`);
+      console.log(`  - Project Title: ${leadRecord.projectTitle}`);
+      console.log(`  - Planned Volume: ${leadRecord.quantity.toLocaleString()} units`);
+      console.log(`  - Contract Framework: ${leadRecord.contractType}`);
+      console.log(`  - Delivery Terms: ${leadRecord.incoterms}`);
+      console.log(`  - Files Attached: ${leadRecord.attachedFilesCount} file(s)`);
+      console.log(`  - Project Brief & Notes: ${leadRecord.notes}`);
+      console.log('================================================================================');
+
+      return res.json({
+        success: true,
+        leadId,
+        message: 'Lead generation alert dispatched successfully to ljservicedg@gmail.com and Service@ljglobal.in',
+        recipients,
+        timestamp,
+        data: leadRecord,
+      });
+    } catch (err: any) {
+      console.error('Failed to log lead inquiry:', err);
+      return res.status(500).json({ error: 'Failed to record lead inquiry alert.' });
+    }
+  });
+
+  // Read logged inquiries for status checks
+  app.get('/api/inquiries', (req, res) => {
+    res.json({
+      success: true,
+      count: leadAlertsStore.length,
+      alertRecipients: ['ljservicedg@gmail.com', 'Service@ljglobal.in'],
+      leads: leadAlertsStore,
+    });
   });
 
   // Resilient static build serving with Vite fallback

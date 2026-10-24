@@ -209,15 +209,35 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 7. RFQ Form Submission
+  // 7. RFQ Form Submission & Dual Email Alert
   if (rfqForm) {
     rfqForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const name = document.getElementById('rfqName')?.value || 'Valued Client';
-      const email = document.getElementById('rfqEmail')?.value;
+      const company = document.getElementById('rfqCompany')?.value || 'Client';
+      const email = document.getElementById('rfqEmail')?.value || '';
+      const phone = document.getElementById('rfqPhone')?.value || '';
+      const service = serviceInput?.value || 'Packaging Inquiry / Contract';
       const qty = document.getElementById('rfqQty')?.value || '5,000';
+      const notes = document.getElementById('rfqNotes')?.value || '';
 
-      alert(`Thank you, ${name}! Your packaging consulting inquiry (${qty} units) has been recorded. Our engineering director will email your structural recommendation and cost matrix to ${email} within 24 hours.`);
+      const subject = encodeURIComponent(`[PACKAGING INQUIRY & CONTRACT] ${service} - ${qty} units (${company})`);
+      const body = encodeURIComponent(
+        `Packaging & Contract Inquiry Lead:\n\n` +
+        `• Name: ${name}\n` +
+        `• Company: ${company}\n` +
+        `• Email: ${email}\n` +
+        `• Phone: ${phone}\n` +
+        `• Scope / Practice: ${service}\n` +
+        `• Target Quantity: ${qty} units\n` +
+        `• Brief: ${notes}\n\n` +
+        `Dual Notification Alert Recipients: ljservicedg@gmail.com & Service@ljglobal.in`
+      );
+
+      // Open mail client prefilled to both inboxes
+      window.location.href = `mailto:ljservicedg@gmail.com,Service@ljglobal.in?subject=${subject}&body=${body}`;
+
+      alert(`Thank you, ${name}! Your packaging consulting & contract inquiry (${qty} units) has been recorded.\n\nLead generation alerts have been dispatched to both:\n• ljservicedg@gmail.com (Engineering)\n• Service@ljglobal.in (Contracts)`);
       if (modal) modal.classList.remove('open');
       rfqForm.reset();
     });

@@ -3,7 +3,7 @@ import { Menu, X, ArrowRight, ChevronDown, Package, Box, Layers, Truck, Sparkles
 import { COMPANY_PROFILE } from '../data/printingData';
 
 interface NavbarProps {
-  onOpenQuoteModal: (initialService?: string) => void;
+  onOpenQuoteModal: (initialService?: string, formType?: 'inquiry' | 'contract') => void;
   onOpenExportModal?: () => void;
   activeSection: string;
   onNavigate: (sectionId: string) => void;
@@ -164,17 +164,26 @@ export const Navbar: React.FC<NavbarProps> = ({
           {onOpenExportModal && (
             <button
               onClick={onOpenExportModal}
-              className="group bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs uppercase tracking-wider px-3.5 py-2.5 rounded-lg border border-slate-300 transition-all duration-150 cursor-pointer flex items-center gap-1.5 shadow-2xs hover:shadow-xs active:scale-[0.98]"
+              className="group bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs uppercase tracking-wider px-3 py-2.5 rounded-lg border border-slate-300 transition-all duration-150 cursor-pointer flex items-center gap-1.5 shadow-2xs hover:shadow-xs active:scale-[0.98]"
               title="View, copy, and download pure standalone HTML, CSS, and JavaScript files"
             >
               <Code2 className="w-3.5 h-3.5 text-[#0066E5]" />
-              <span>HTML / CSS / JS</span>
+              <span>HTML / CSS</span>
             </button>
           )}
 
           <button
-            onClick={() => onOpenQuoteModal('General Packaging Inquiry')}
-            className="group bg-[#0066E5] hover:bg-[#0052B8] text-white font-bold text-xs uppercase tracking-wider px-5 py-2.5 rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-2 shadow-sm hover:shadow active:scale-[0.98]"
+            onClick={() => onOpenQuoteModal('Commercial Packaging Supply Agreement', 'contract')}
+            className="group bg-emerald-50 hover:bg-emerald-100 text-emerald-950 font-bold text-xs uppercase tracking-wider px-3.5 py-2.5 rounded-lg border border-emerald-300 transition-all duration-150 cursor-pointer flex items-center gap-1.5 shadow-2xs hover:shadow-xs active:scale-[0.98]"
+            title="Submit Commercial Supply Agreement, MSA, or Volume Call-Off Contract"
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>Contract Agreement</span>
+          </button>
+
+          <button
+            onClick={() => onOpenQuoteModal('General Packaging Inquiry', 'inquiry')}
+            className="group bg-[#0066E5] hover:bg-[#0052B8] text-white font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-2 shadow-sm hover:shadow active:scale-[0.98]"
           >
             <span>Submit Inquiry</span>
             <ArrowRight className="w-3.5 h-3.5 text-white/80 group-hover:translate-x-0.5 transition-transform" />
@@ -243,15 +252,26 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
-            <button
-              onClick={() => {
-                onOpenQuoteModal('General Packaging Inquiry');
-                setMobileMenuOpen(false);
-              }}
-              className="w-full py-3 bg-[#0066E5] hover:bg-[#0052B8] text-white font-bold uppercase text-center rounded-lg shadow-sm"
-            >
-              Submit Inquiry
-            </button>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                onClick={() => {
+                  onOpenQuoteModal('Commercial Packaging Supply Agreement', 'contract');
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border border-emerald-300 font-bold uppercase text-center rounded-lg text-xs"
+              >
+                Contract Form
+              </button>
+              <button
+                onClick={() => {
+                  onOpenQuoteModal('General Packaging Inquiry', 'inquiry');
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full py-2.5 bg-[#0066E5] hover:bg-[#0052B8] text-white font-bold uppercase text-center rounded-lg text-xs shadow-sm"
+              >
+                Submit Inquiry
+              </button>
+            </div>
           </div>
         </div>
       )}

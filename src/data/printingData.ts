@@ -29,6 +29,7 @@ export const COMPANY_PROFILE = {
   division: 'Primary, Secondary & Tertiary Packaging Engineering & Dispatch',
   tagline: 'End-to-End Packaging Advisory: Flexible Laminates, Folding Carton Die Layouts, Commercial Printing & Global Export Dispatch',
   email: 'ljservicedg@gmail.com',
+  contractEmail: 'Service@LjGlobal.in',
   linkedinUrl: 'https://www.linkedin.com/in/lj-global-service-4aa247424/',
   preferredCartonManufacturer: {
     name: 'Veena Graphics',

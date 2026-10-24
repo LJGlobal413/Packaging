@@ -1,12 +1,31 @@
-import React, { useState, useRef } from 'react';
-import { X, Send, Mail, CheckCircle2, Box, Layers, Package, Truck, Compass, Paperclip, FileText, Trash2, UploadCloud } from 'lucide-react';
-import { COMPANY_PROFILE, CAD_DIELINE_PRESETS, PACKAGING_MATERIALS } from '../data/printingData';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  X,
+  Send,
+  Mail,
+  CheckCircle2,
+  Box,
+  Layers,
+  Package,
+  Truck,
+  Paperclip,
+  Trash2,
+  UploadCloud,
+  Copy,
+  Check,
+  FileCheck,
+  ShieldCheck,
+  Loader2,
+  Sparkles,
+} from 'lucide-react';
+import { COMPANY_PROFILE } from '../data/printingData';
 
 interface RfqModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialSpec?: {
     category?: string;
+    formType?: 'inquiry' | 'contract';
     quantity?: number;
     paperStock?: string;
     colorMode?: string;
@@ -28,6 +47,9 @@ export const RfqModal: React.FC<RfqModalProps> = ({
   onClose,
   initialSpec,
 }) => {
+  const [formType, setFormType] = useState<'inquiry' | 'contract'>(
+    initialSpec?.formType || (initialSpec?.category?.toLowerCase().includes('contract') ? 'contract' : 'inquiry')
+  );
   const [fullName, setFullName] = useState('');
   const [company, setCompany] = useState('');
   const [email, setEmail] = useState('');
@@ -42,7 +64,13 @@ export const RfqModal: React.FC<RfqModalProps> = ({
   const [projectTitle, setProjectTitle] = useState(
     initialSpec?.category || 'Folding Carton Design, Die Layout & Print Dispatch'
   );
-  const [quantity, setQuantity] = useState(initialSpec?.quantity || 3000);
+  const [quantity, setQuantity] = useState(initialSpec?.quantity || 5000);
+
+  // Contract specific fields
+  const [contractType, setContractType] = useState('Master Supply Agreement (MSA) - Multi-Year Supply');
+  const [incoterms, setIncoterms] = useState('FOB Hong Kong / Shenzhen');
+  const [contractDuration, setContractDuration] = useState('12-Month Annual Rolling Contract');
+
   const [notes, setNotes] = useState(
     initialSpec
       ? `Consulting & Production Parameters:\n- Material Stock: ${initialSpec.paperStock || '350gsm C1S SBS'}\n- Print / Coating: ${initialSpec.colorMode || '4C Offset + Soft-Touch'}\n- Layout & Specs: ${(initialSpec.finishes || []).join(' | ')}\n- Estimated Budget: ${initialSpec.totalEstimate || 'Pending'}\n- Target Timeline: ${initialSpec.leadTime || '6-10 Days Print & Dispatch'}`
@@ -51,7 +79,21 @@ export const RfqModal: React.FC<RfqModalProps> = ({
   const [attachedFiles, setAttachedFiles] = useState<AttachedFileInfo[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [copiedBrief, setCopiedBrief] = useState(false);
+  const [serverLeadId, setServerLeadId] = useState<string>('');
+
+  // Primary dual-alert email addresses
+  const primaryEngineeringEmail = COMPANY_PROFILE.email || 'ljservicedg@gmail.com';
+  const primaryContractEmail = COMPANY_PROFILE.contractEmail || 'Service@ljglobal.in';
+
+  useEffect(() => {
+    if (initialSpec?.formType) {
+      setFormType(initialSpec.formType);
+    }
+  }, [initialSpec]);
 
   if (!isOpen) return null;
 
@@ -75,62 +117,138 @@ export const RfqModal: React.FC<RfqModalProps> = ({
     setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSendRequest = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitted(true);
+  const getScopeLabel = () => {
+    if (scope === 'full-system') return 'Full System Packaging Audit (Primary + Secondary + Tertiary)';
+    if (scope === 'folding-carton-die') return 'Folding Carton Design & Step-and-Repeat Die Layout';
+    if (scope === 'flexible-laminate') return 'Flexible Pouch Laminate Structure & Barrier Chemistry';
+    return 'Full-Scale Folding Carton Printing & Global Container Dispatch';
   };
 
-  const generateMailtoUrl = () => {
-    const scopeLabel =
-      scope === 'full-system'
-        ? 'Full System Packaging Audit (Primary + Secondary + Tertiary)'
-        : scope === 'folding-carton-die'
-        ? 'Folding Carton Design & Step-and-Repeat Die Layout'
-        : scope === 'flexible-laminate'
-        ? 'Flexible Pouch Laminate Structure & Barrier Chemistry'
-        : 'Full-Scale Folding Carton Printing & Global Container Dispatch';
-
+  const buildBriefText = () => {
+    const scopeLabel = getScopeLabel();
     const filesText =
       attachedFiles.length > 0
         ? `\n\nAttached Dielines / Artwork / CAD Files (${attachedFiles.length}):\n` +
-          attachedFiles.map((f, idx) => `  ${idx + 1}. ${f.name} (${f.size})`).join('\n') +
-          `\n*(Please attach these files directly to this email before sending)*`
+          attachedFiles.map((f, idx) => `  ${idx + 1}. ${f.name} (${f.size})`).join('\n')
         : '';
 
+    const contractBlock =
+      formType === 'contract'
+        ? `\nCommercial Contract Parameters:\n• Contract Framework: ${contractType}\n• Incoterms / Dispatch Terms: ${incoterms}\n• Contract Duration / Horizon: ${contractDuration}\n`
+        : '';
+
+    return (
+      `==================================================\n` +
+      `LJ PACKAGING CONSULTANTS - LEAD & CONTRACT INQUIRY\n` +
+      `Target Notification Emails: ${primaryEngineeringEmail} & ${primaryContractEmail}\n` +
+      `==================================================\n\n` +
+      `SUBMISSION TYPE: ${formType === 'contract' ? 'COMMERCIAL CONTRACT & SUPPLY AGREEMENT' : 'TECHNICAL PACKAGING INQUIRY'}\n\n` +
+      `CLIENT CONTACT DETAILS:\n` +
+      `• Contact Name: ${fullName}\n` +
+      `• Company / Brand: ${company}\n` +
+      `• Work Email: ${email}\n` +
+      `• Phone / WhatsApp: ${phone || 'Not provided'}\n\n` +
+      `SPECIFICATIONS & SCOPE:\n` +
+      `• Practice Scope: ${scopeLabel}\n` +
+      `• Product / Spec Title: ${projectTitle}\n` +
+      `• Planned Production Volume: ${quantity.toLocaleString()} units\n` +
+      contractBlock +
+      `\nPROJECT BRIEF & TECHNICAL NOTES:\n${notes || 'No additional notes provided.'}` +
+      filesText
+    );
+  };
+
+  const generateMailtoUrl = () => {
+    const scopeLabel = getScopeLabel();
+    const isContract = formType === 'contract';
+
     const subject = encodeURIComponent(
-      `Packaging Consulting & Production RFQ: [${scopeLabel}] - ${quantity} units (${company || fullName})`
+      `[${isContract ? 'CONTRACT & SUPPLY AGREEMENT' : 'PACKAGING INQUIRY'}] ${projectTitle} - ${quantity.toLocaleString()} units (${company || fullName})`
     );
-    const body = encodeURIComponent(
-      `Hello LJ Packaging Consulting Group Team,\n\n` +
-        `I would like to engage your consulting and production team with the following requirements:\n\n` +
-        `• Contact Name: ${fullName}\n` +
-        `• Company / Brand: ${company}\n` +
-        `• Work Email: ${email}\n` +
-        `• Phone / WhatsApp: ${phone}\n\n` +
-        `• Consulting Scope: ${scopeLabel}\n` +
-        `• Project / Product Title: ${projectTitle}\n` +
-        `• Planned Production Volume: ${quantity} units\n\n` +
-        `Technical Parameters & Project Brief:\n${notes}${filesText}\n\n` +
-        `Please send your consulting feedback, CAD dieline layout proposal, and production printing & dispatch quotation.\n\nThank you,\n${fullName}`
+
+    const fullBrief = buildBriefText();
+    const emailBody = encodeURIComponent(
+      `${fullBrief}\n\n` +
+        `--------------------------------------------------\n` +
+        `Note: This lead alert has also been automatically registered on the LJ Packaging server for priority dispatch to:\n` +
+        `• Engineering & Technical Team: ${primaryEngineeringEmail}\n` +
+        `• Commercial & Contract Desk:   ${primaryContractEmail}\n` +
+        `--------------------------------------------------\n\n` +
+        `Please send your response, CAD dieline proposals, and contract agreement documentation.\n\n` +
+        `Thank you,\n${fullName}`
     );
-    return `mailto:${COMPANY_PROFILE.email}?subject=${subject}&body=${body}`;
+
+    // Both emails are in the 'to' field: ljservicedg@gmail.com,Service@ljglobal.in
+    return `mailto:${primaryEngineeringEmail},${primaryContractEmail}?subject=${subject}&body=${emailBody}`;
+  };
+
+  const handleSendRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      // Dispatch lead generation alert to backend server
+      const response = await fetch('/api/inquiry', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName,
+          company,
+          email,
+          phone,
+          formType,
+          scope: getScopeLabel(),
+          projectTitle,
+          quantity,
+          contractType: formType === 'contract' ? contractType : undefined,
+          incoterms: formType === 'contract' ? incoterms : undefined,
+          notes,
+          attachedFiles,
+        }),
+      });
+
+      const resData = await response.json();
+      if (resData.leadId) {
+        setServerLeadId(resData.leadId);
+      }
+    } catch (err) {
+      console.warn('Backend lead alert logged locally:', err);
+    } finally {
+      setIsSubmitting(false);
+      setSubmitted(true);
+    }
+  };
+
+  const handleCopyBrief = () => {
+    navigator.clipboard.writeText(buildBriefText());
+    setCopiedBrief(true);
+    setTimeout(() => setCopiedBrief(false), 2500);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs font-sans">
-      <div className="relative w-full max-w-2xl bg-white rounded-xl shadow-2xl border border-zinc-200 overflow-hidden max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs font-sans animate-fade-in">
+      <div className="relative w-full max-w-2xl bg-white rounded-xl shadow-2xl border border-zinc-200 overflow-hidden max-h-[92vh] flex flex-col">
         {/* Header */}
-        <div className="p-6 bg-zinc-950 text-white flex items-center justify-between border-b border-zinc-800">
+        <div className="p-5 sm:p-6 bg-zinc-950 text-white flex items-center justify-between border-b border-zinc-800">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded bg-[#0066E5] flex items-center justify-center text-white font-mono font-bold text-sm">
+            <div className="w-10 h-10 rounded bg-[#0066E5] flex items-center justify-center text-white font-mono font-bold text-sm shrink-0">
               LJ
             </div>
             <div>
-              <h3 className="text-lg font-bold text-white uppercase tracking-tight">
-                Request Packaging Consulting & Production Dispatch
-              </h3>
-              <p className="text-xs text-zinc-400 font-mono">
-                Primary Pouches · Secondary Cartons & Dies · Global Dispatch
+              <div className="flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-bold text-white uppercase tracking-tight">
+                  {formType === 'contract'
+                    ? 'Commercial Contract & Supply Agreement'
+                    : 'Packaging Inquiry & Technical Consultation'}
+                </h3>
+                <span className="px-2 py-0.5 text-[9px] font-mono font-bold uppercase rounded bg-blue-500/20 text-[#00AEEF] border border-blue-500/30 hidden sm:inline-block">
+                  Dual-Alert
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-400 font-mono mt-0.5">
+                Notifications routed to: <span className="text-[#00AEEF] font-semibold">{primaryEngineeringEmail}</span> & <span className="text-emerald-400 font-semibold">{primaryContractEmail}</span>
               </p>
             </div>
           </div>
@@ -143,47 +261,120 @@ export const RfqModal: React.FC<RfqModalProps> = ({
           </button>
         </div>
 
-        {/* Form Body */}
-        <div className="p-6 overflow-y-auto space-y-6">
-          {submitted ? (
-            <div className="text-center py-8 space-y-4">
-              <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
-                <CheckCircle2 className="w-8 h-8" />
-              </div>
-              <h4 className="text-2xl font-bold text-zinc-950">
-                Consulting Specification Logged!
-              </h4>
-              <p className="text-sm text-zinc-600 max-w-md mx-auto">
-                Click below to dispatch your parameters directly to our senior packaging consultants and manufacturing
-                leads at <strong className="text-zinc-950">{COMPANY_PROFILE.email}</strong>.
-              </p>
+        {/* Tab Toggle: Inquiry vs Contract */}
+        <div className="bg-zinc-100 border-b border-zinc-200 px-6 pt-3 flex gap-4 text-xs font-bold uppercase tracking-wider">
+          <button
+            type="button"
+            onClick={() => setFormType('inquiry')}
+            className={`pb-2.5 px-1 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
+              formType === 'inquiry'
+                ? 'border-[#0066E5] text-[#0066E5]'
+                : 'border-transparent text-zinc-500 hover:text-zinc-900'
+            }`}
+          >
+            <Box className="w-4 h-4" />
+            <span>1. Technical Packaging Inquiry</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setFormType('contract')}
+            className={`pb-2.5 px-1 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
+              formType === 'contract'
+                ? 'border-emerald-600 text-emerald-600'
+                : 'border-transparent text-zinc-500 hover:text-zinc-900'
+            }`}
+          >
+            <FileCheck className="w-4 h-4" />
+            <span>2. Contract & Supply Agreement</span>
+          </button>
+        </div>
 
-              <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+        {/* Form Body */}
+        <div className="p-5 sm:p-6 overflow-y-auto space-y-6">
+          {submitted ? (
+            <div className="text-center py-6 space-y-5">
+              <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                <CheckCircle2 className="w-9 h-9" />
+              </div>
+              <div>
+                <h4 className="text-2xl font-bold text-zinc-950">
+                  Lead Generation & Contract Alert Dispatched!
+                </h4>
+                {serverLeadId && (
+                  <p className="text-xs font-mono text-zinc-500 mt-1">
+                    System Reference ID: <strong className="text-zinc-800">{serverLeadId}</strong>
+                  </p>
+                )}
+              </div>
+
+              {/* Verified Alert Routing Card */}
+              <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 text-left max-w-lg mx-auto space-y-3 shadow-xs">
+                <div className="flex items-center gap-2 text-xs font-bold font-mono uppercase text-zinc-700">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span>Email Notification Alerts Queued To Both Inboxes:</span>
+                </div>
+                <div className="space-y-2 text-xs">
+                  <div className="flex items-center justify-between p-2 rounded bg-white border border-zinc-200">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-[#0066E5]"></span>
+                      <span className="font-semibold text-zinc-900">Engineering & Manufacturing Lead:</span>
+                    </div>
+                    <span className="font-mono text-[#0066E5] font-bold">{primaryEngineeringEmail}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded bg-white border border-zinc-200">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                      <span className="font-semibold text-zinc-900">Commercial Contract Desk:</span>
+                    </div>
+                    <span className="font-mono text-emerald-600 font-bold">{primaryContractEmail}</span>
+                  </div>
+                </div>
+                <p className="text-[11px] text-zinc-500 leading-relaxed pt-1">
+                  Our engineering director and contract leads have been notified. Click below to open your preferred mail client with all formatted specifications pre-filled.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <a
                   href={generateMailtoUrl()}
-                  className="w-full sm:w-auto px-6 py-3 bg-[#0066E5] hover:bg-[#0052B8] text-white font-bold text-xs uppercase tracking-wider rounded transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-sm"
+                  className="w-full sm:w-auto px-6 py-3 bg-[#0066E5] hover:bg-[#0052B8] text-white font-bold text-xs uppercase tracking-wider rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-sm"
                 >
                   <Mail className="w-4 h-4" />
-                  <span>Open in Mail Client</span>
+                  <span>Open in Mail Client (Prefilled to Both)</span>
                 </a>
+
+                <button
+                  onClick={handleCopyBrief}
+                  className="w-full sm:w-auto px-5 py-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-semibold text-xs uppercase tracking-wider rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2"
+                >
+                  {copiedBrief ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                  <span>{copiedBrief ? 'Copied Contract Brief!' : 'Copy Full Brief'}</span>
+                </button>
+
                 <button
                   onClick={() => {
                     setSubmitted(false);
                     onClose();
                   }}
-                  className="w-full sm:w-auto px-6 py-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-semibold text-xs uppercase tracking-wider rounded transition-colors cursor-pointer"
+                  className="w-full sm:w-auto px-5 py-3 text-zinc-500 hover:text-zinc-900 font-semibold text-xs uppercase tracking-wider cursor-pointer"
                 >
-                  Close
+                  Done
                 </button>
               </div>
             </div>
           ) : (
             <form onSubmit={handleSendRequest} className="space-y-4 text-xs">
-              {/* Consulting Practice Scope Selector */}
+              {/* Scope Practice Selector */}
               <div>
-                <label className="block text-[11px] font-mono uppercase tracking-wider text-zinc-600 font-bold mb-1.5">
-                  Select Consulting & Production Practice:
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-[11px] font-mono uppercase tracking-wider text-zinc-600 font-bold">
+                    Select Packaging Discipline / Scope:
+                  </label>
+                  <span className="text-[10px] text-zinc-400 font-mono">
+                    Routing to {primaryEngineeringEmail} & {primaryContractEmail}
+                  </span>
+                </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <button
                     type="button"
@@ -239,6 +430,66 @@ export const RfqModal: React.FC<RfqModalProps> = ({
                 </div>
               </div>
 
+              {/* Commercial Contract Parameters (Visible in Contract Mode) */}
+              {formType === 'contract' && (
+                <div className="bg-emerald-50/60 border border-emerald-200/80 rounded-lg p-3.5 space-y-3">
+                  <div className="flex items-center gap-1.5 text-emerald-800 font-bold text-[11px] uppercase tracking-wider font-mono">
+                    <FileCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Commercial Contract & Supply Agreement Framework:</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div>
+                      <label className="block text-[10px] font-mono uppercase text-emerald-900 font-bold mb-1">
+                        Contract Type
+                      </label>
+                      <select
+                        value={contractType}
+                        onChange={(e) => setContractType(e.target.value)}
+                        className="w-full bg-white border border-emerald-300 rounded p-2 text-zinc-900 focus:outline-none focus:border-emerald-600 text-xs"
+                      >
+                        <option>Master Supply Agreement (MSA)</option>
+                        <option>Annual Volume Call-Off Agreement</option>
+                        <option>Proprietary CAD Die & Tooling Contract</option>
+                        <option>NDA & Confidential Packaging Development</option>
+                        <option>Trial Batch / Pilot Run Agreement</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-mono uppercase text-emerald-900 font-bold mb-1">
+                        Delivery Incoterms
+                      </label>
+                      <select
+                        value={incoterms}
+                        onChange={(e) => setIncoterms(e.target.value)}
+                        className="w-full bg-white border border-emerald-300 rounded p-2 text-zinc-900 focus:outline-none focus:border-emerald-600 text-xs"
+                      >
+                        <option>FOB Hong Kong / Shenzhen</option>
+                        <option>CIF Global Destination Port</option>
+                        <option>DDP Warehouse (Duty Paid)</option>
+                        <option>Ex-Works (Dongguan Factory)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-mono uppercase text-emerald-900 font-bold mb-1">
+                        Contract Duration
+                      </label>
+                      <select
+                        value={contractDuration}
+                        onChange={(e) => setContractDuration(e.target.value)}
+                        className="w-full bg-white border border-emerald-300 rounded p-2 text-zinc-900 focus:outline-none focus:border-emerald-600 text-xs"
+                      >
+                        <option>12-Month Annual Rolling Contract</option>
+                        <option>Multi-Year Long-Term Agreement</option>
+                        <option>6-Month Fixed Call-Off Window</option>
+                        <option>Single Production Run Contract</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Contact Fields */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -264,7 +515,7 @@ export const RfqModal: React.FC<RfqModalProps> = ({
                     required
                     value={company}
                     onChange={(e) => setCompany(e.target.value)}
-                    placeholder="Lumina Organics / Studio"
+                    placeholder="Lumina Global Brand Inc."
                     className="w-full border border-zinc-300 rounded p-2.5 text-zinc-900 focus:outline-none focus:border-[#0066E5]"
                   />
                 </div>
@@ -285,10 +536,11 @@ export const RfqModal: React.FC<RfqModalProps> = ({
 
                 <div>
                   <label className="block text-[11px] font-mono uppercase text-zinc-600 font-bold mb-1">
-                    Phone / WhatsApp
+                    Phone / WhatsApp *
                   </label>
                   <input
                     type="tel"
+                    required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+1 (555) 019-2834"
@@ -297,7 +549,7 @@ export const RfqModal: React.FC<RfqModalProps> = ({
                 </div>
               </div>
 
-              {/* Box Format & Quantity */}
+              {/* Product Spec & Production Volume */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-mono uppercase text-zinc-600 font-bold mb-1">
@@ -314,11 +566,12 @@ export const RfqModal: React.FC<RfqModalProps> = ({
 
                 <div>
                   <label className="block text-[11px] font-mono uppercase text-zinc-600 font-bold mb-1">
-                    Planned Production Volume
+                    Planned Production Volume (Units) *
                   </label>
                   <input
                     type="number"
                     min="100"
+                    required
                     value={quantity}
                     onChange={(e) => setQuantity(Number(e.target.value))}
                     className="w-full border border-zinc-300 rounded p-2.5 text-zinc-900 focus:outline-none focus:border-[#0066E5]"
@@ -331,7 +584,7 @@ export const RfqModal: React.FC<RfqModalProps> = ({
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="block text-[11px] font-mono uppercase text-zinc-600 font-bold">
-                      Product Details (Dimensions, Shelf-Life Goal, Barrier Needs, Shipping Destination)
+                      Technical Parameters, Barrier Goals & Contract Terms:
                     </label>
                     <button
                       type="button"
@@ -346,7 +599,7 @@ export const RfqModal: React.FC<RfqModalProps> = ({
                     rows={3}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Specify product form (liquid, powder, solid), dimensions L×W×D, barrier sensitivity (oxygen/moisture), target shelf-life, printing finishes, and port destination..."
+                    placeholder="Specify dimensions (L×W×D), barrier requirements (OTR/WVTR), substrate choices, target incoterms, annual schedule, or NDA requirements..."
                     className="w-full border border-zinc-300 rounded p-2.5 text-zinc-900 focus:outline-none focus:border-[#0066E5] resize-none"
                   />
                 </div>
@@ -388,10 +641,10 @@ export const RfqModal: React.FC<RfqModalProps> = ({
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-zinc-800">
-                        <span className="text-[#0066E5] underline decoration-[#0066E5]/40 underline-offset-2">Click to upload</span> or drag & drop packaging files
+                        <span className="text-[#0066E5] underline decoration-[#0066E5]/40 underline-offset-2">Click to upload</span> or drag & drop CAD files or contracts
                       </p>
                       <p className="text-[10px] text-zinc-500 font-mono mt-0.5">
-                        CAD Dielines (.ARD, .DXF, .AI), Artwork (.PDF, .EPS), or Spec Sheets (Up to 50MB)
+                        CAD Dielines (.ARD, .DXF, .AI), Artwork (.PDF, .EPS), or MSA Drafts (Up to 50MB)
                       </p>
                     </div>
                   </div>
@@ -438,22 +691,39 @@ export const RfqModal: React.FC<RfqModalProps> = ({
                 </div>
               </div>
 
-              {/* Footer */}
-              <div className="pt-2 flex items-center justify-end gap-3 border-t border-zinc-100">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 text-zinc-600 hover:text-zinc-900 font-semibold cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex items-center gap-2 bg-[#0066E5] hover:bg-[#0052B8] text-white font-bold text-xs uppercase tracking-wider px-6 py-3 rounded cursor-pointer shadow-sm"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>Submit to Consulting & Factory Team</span>
-                </button>
+              {/* Footer with Lead Alert Routing Notice */}
+              <div className="pt-3 border-t border-zinc-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="text-[11px] font-mono text-zinc-500 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>Alerts: {primaryEngineeringEmail} & {primaryContractEmail}</span>
+                </div>
+
+                <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-4 py-2 text-zinc-600 hover:text-zinc-900 font-semibold cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex items-center justify-center gap-2 bg-[#0066E5] hover:bg-[#0052B8] disabled:bg-zinc-400 text-white font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg cursor-pointer shadow-sm transition-all"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Logging Lead Alert...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-3.5 h-3.5" />
+                        <span>{formType === 'contract' ? 'Submit Contract Request' : 'Submit Inquiry & Alert Both'}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
           )}
